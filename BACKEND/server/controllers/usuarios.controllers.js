@@ -1,4 +1,3 @@
-import e from "cors";
 import { pool } from "../db.js";
 
 export const getUsuario = async (req,res) => {
@@ -47,4 +46,93 @@ export const createUsuario = async (req,res) =>{
         res.status(500).json({error: "Error al registrar el Usuario"})
     }
 }
+
+export const getEmpleadosFaciales = async (req, res) => {
+    try {
+        const [result] = await pool.query(`
+            SELECT
+                id_usuario AS id,
+                nombre,
+                apellido_paterno,
+                apellido_materno,
+                datos_faciales AS descriptores_faciales,
+                id_departamento,
+                id_rol
+            FROM usuarios
+            WHERE datos_faciales IS NOT NULL
+        `);
+
+        res.json(result);
+    } catch (error) {
+        console.log("Error en getEmpleadosFaciales:", error);
+        res.status(500).json({ message: "Error al obtener empleados" });
+    }
+};
+
+export const createEmpleadoFacial = async (req, res) => {
+    try {
+        const { nombre, departamento, descriptores_faciales } = req.body;
+
+        if (!nombre || !descriptores_faciales) {
+            return res.status(400).json({ message: "Nombre y datos faciales son requeridos" });
+        }
+
+        const partesNombre = nombre.trim().split(/\s+/);
+        const primerNombre = partesNombre[0] || "Empleado";
+        const apellidoPaterno = partesNombre[1] || "SinApellido";
+        const apellidoMaterno = partesNombre.slice(2).join(" ") || null;
+
+        let idDepartamento = null;
+
+        if (departamento) {
+            const [departamentos] = await pool.query(
+                "SELECT id_departamento FROM departamentos WHERE nombre_departamento = ?",
+                [departamento]
+            );
+
+            if (departamentos.length > 0) {
+                idDepartamento = departamentos[0].id_departamento;
+            }
+        }
+
+        const email = `empleado_${Date.now()}@roocel.local`;
+        const password = "";
+        const idRolEmpleado = 2;
+
+        const [result] = await pool.query(
+            `
+            INSERT INTO usuarios (
+                nombre,
+                apellido_paterno,
+                apellido_materno,
+                email,
+                password,
+                datos_faciales,
+                id_departamento,
+                id_rol
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+                primerNombre,
+                apellidoPaterno,
+                apellidoMaterno,
+                email,
+                password,
+                descriptores_faciales,
+                idDepartamento,
+                idRolEmpleado
+            ]
+        );
+
+        res.status(201).json({
+            status: "success",
+            id: result.insertId,
+            nombre: primerNombre
+        });
+    } catch (error) {
+        console.log("Error en createEmpleadoFacial:", error);
+        res.status(500).json({ message: "Error al registrar empleado" });
+    }
+};
 
