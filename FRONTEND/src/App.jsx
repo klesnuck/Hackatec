@@ -53,7 +53,19 @@ function App() {
         path="/admin/dashboard"
         element={
           adminLoggedIn ? (
-            <Dashboard adminUser={adminUser} onLogout={handleLogout} />
+            <Dashboard adminUser={adminUser} onLogout={handleLogout} view="dashboard" />
+          ) : (
+            <Navigate to="/admin" replace />
+          )
+        }
+      />
+
+      {/* Gestion de asistencia */}
+      <Route
+        path="/admin/gestion"
+        element={
+          adminLoggedIn ? (
+            <Dashboard adminUser={adminUser} onLogout={handleLogout} view="gestion" />
           ) : (
             <Navigate to="/admin" replace />
           )

@@ -123,6 +123,11 @@ function RegistroFacial({ onLogout }) {
               Dashboard
             </Link>
 
+            <Link to="/admin/gestion">
+              <span>*</span>
+              Gestion
+            </Link>
+
             <Link className="active" to="/admin/registro-facial">
               <span>◎</span>
               Registro facial

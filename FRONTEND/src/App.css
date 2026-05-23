@@ -627,7 +627,7 @@ input {
   border-radius: 16px;
   padding: 18px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -714,7 +714,7 @@ input {
   border-radius: 16px;
   padding: 18px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1404,6 +1404,8 @@ body {
   padding: 4px;
   border: 1px solid rgba(31, 199, 153, 0.18);
   background: rgba(13, 22, 34, 0.86);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .chart-tabs button {
@@ -1473,6 +1475,135 @@ body {
   min-width: 640px;
 }
 
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.table-toolbar {
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(31, 199, 153, 0.14);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-group {
+  width: min(420px, 100%);
+}
+
+.export-menu {
+  position: relative;
+  z-index: 50;
+}
+
+.kebab-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(31, 199, 153, 0.22);
+  background: rgba(31, 199, 153, 0.08);
+  color: #dffef6;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.kebab-btn:hover {
+  background: rgba(31, 199, 153, 0.16);
+  color: #2df19e;
+}
+
+.export-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 190px;
+  padding: 8px;
+  background: #0d1622;
+  border: 1px solid rgba(31, 199, 153, 0.24);
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
+  z-index: 100;
+}
+
+.detail-export-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.detail-export-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.detail-export-actions button {
+  border: 1px solid rgba(31, 199, 153, 0.22);
+  background: rgba(31, 199, 153, 0.1);
+  color: #dffef6;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.detail-export-actions button:hover {
+  background: rgba(31, 199, 153, 0.18);
+  color: #2df19e;
+}
+
+.export-menu-panel button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #d9e7f3;
+  padding: 11px 12px;
+  text-align: left;
+  border-radius: 6px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.export-menu-panel button:hover {
+  background: rgba(31, 199, 153, 0.12);
+  color: #2df19e;
+}
+
+@media print {
+  .sidebar,
+  .filters-card,
+  .chart-card,
+  .pagination-bar,
+  .table-actions,
+  .table-toolbar {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    width: 100% !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .dashboard-layout,
+  .table-card,
+  .dashboard-layout td,
+  .dashboard-layout th {
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+}
+
 @media (max-width: 760px) {
   .sidebar {
     position: relative;
@@ -1494,6 +1625,11 @@ body {
   }
 
   .pagination-bar {
+    justify-content: space-between;
+  }
+
+  .table-actions {
+    width: 100%;
     justify-content: space-between;
   }
 }
