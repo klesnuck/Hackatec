@@ -1,41 +1,113 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import * as faceapi from "face-api.js";
 import "./App.css";
 
+const API_URL = "http://localhost:5000";
+const MODEL_URL = "/models";
+
 function RegistroFacial({ onLogout }) {
-  const usuarios = [
-    {
-      id_usuario: 1,
-      nombre: "Carlos",
-      apellido_paterno: "Mendoza",
-      email: "carlos.mendoza@roceel.com",
-      departamento: "Mantenimiento",
-      datos_faciales: true,
-    },
-    {
-      id_usuario: 2,
-      nombre: "Diego",
-      apellido_paterno: "Sánchez",
-      email: "diego.sanchez@roceel.com",
-      departamento: "Mantenimiento",
-      datos_faciales: true,
-    },
-    {
-      id_usuario: 5,
-      nombre: "Patricia",
-      apellido_paterno: "Ruiz",
-      email: "patricia.ruiz@roceel.com",
-      departamento: "Administración",
-      datos_faciales: false,
-    },
-    {
-      id_usuario: 8,
-      nombre: "José",
-      apellido_paterno: "Torres",
-      email: "jose.torres@roceel.com",
-      departamento: "Mantenimiento",
-      datos_faciales: false,
-    },
-  ];
+  const videoRef = useRef();
+  const [empleados, setEmpleados] = useState([]);
+  const [seleccionado, setSeleccionado] = useState(null);
+  const [modelosListos, setModelosListos] = useState(false);
+  const [statusTexto, setStatusTexto] = useState("Cargando modelos de IA...");
+  const [cargando, setCargando] = useState(false);
+
+  // ── Cargar modelos de face-api + cámara ──────────────────────────────────
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        setModelosListos(true);
+        setStatusTexto("Sistema listo. Seleccione un empleado.");
+        encenderCamara();
+      } catch (e) {
+        console.error(e);
+        setStatusTexto("Error al cargar modelos de IA.");
+      }
+    };
+    init();
+
+    return () => {
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
+  // ── Cargar lista de empleados desde el backend ───────────────────────────
+  useEffect(() => {
+    fetch(`${API_URL}/api/empleados`)
+      .then((r) => r.json())
+      .then((data) => setEmpleados(data))
+      .catch(() => setStatusTexto("Error al cargar empleados del servidor."));
+  }, []);
+
+  const encenderCamara = () => {
+    navigator.mediaDevices
+      .getUserMedia({ video: { width: 640, height: 480 } })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      })
+      .catch(() => setStatusTexto("Cámara no detectada."));
+  };
+
+  // ── Capturar rostro y actualizar descriptor en BD ────────────────────────
+  const capturarRostro = async () => {
+    if (!seleccionado) {
+      setStatusTexto("⚠ Seleccione un empleado primero.");
+      return;
+    }
+    if (!modelosListos) {
+      setStatusTexto("Espere, los modelos aún están cargando...");
+      return;
+    }
+
+    setStatusTexto("Analizando rostro... ¡No se mueva!");
+    setCargando(true);
+
+    const deteccion = await faceapi
+      .detectSingleFace(videoRef.current)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!deteccion) {
+      setStatusTexto("✗ No se detectó ningún rostro. Intente de nuevo.");
+      setCargando(false);
+      return;
+    }
+
+    const descriptoresString = JSON.stringify(Array.from(deteccion.descriptor));
+    setStatusTexto("Guardando en la base de datos...");
+
+    try {
+      const res = await fetch(`${API_URL}/api/empleados/${seleccionado.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descriptores_faciales: descriptoresString }),
+      });
+
+      if (res.ok) {
+        setStatusTexto(`✓ Rostro de ${seleccionado.nombre} actualizado correctamente.`);
+        // Recargar lista para reflejar el cambio
+        const data = await fetch(`${API_URL}/api/empleados`).then((r) => r.json());
+        setEmpleados(data);
+        setSeleccionado(null);
+      } else {
+        setStatusTexto("Error: El servidor rechazó la actualización.");
+      }
+    } catch {
+      setStatusTexto("Error de red al conectar con el servidor.");
+    } finally {
+      setCargando(false);
+    }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -78,6 +150,7 @@ function RegistroFacial({ onLogout }) {
         </header>
 
         <section className="biometric-grid">
+          {/* ── Columna izquierda: lista de empleados ── */}
           <div className="biometric-card">
             <div className="card-header no-border">
               <div>
@@ -86,51 +159,68 @@ function RegistroFacial({ onLogout }) {
             </div>
 
             <div className="employee-select-list">
-              {usuarios.map((usuario) => (
-                <div className="select-user-row" key={usuario.id_usuario}>
+              {empleados.length === 0 && (
+                <p style={{ padding: "1rem", color: "#888" }}>
+                  Cargando empleados...
+                </p>
+              )}
+              {empleados.map((emp) => (
+                <div
+                  className={`select-user-row${seleccionado?.id === emp.id ? " selected" : ""}`}
+                  key={emp.id}
+                  onClick={() => {
+                    setSeleccionado(emp);
+                    setStatusTexto(`Empleado seleccionado: ${emp.nombre}. Capture el rostro.`);
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
                   <div>
-                    <strong>
-                      {usuario.nombre} {usuario.apellido_paterno}
-                    </strong>
+                    <strong>{emp.nombre}</strong>
                     <p>
-                      ID usuario: {usuario.id_usuario} · {usuario.departamento}
+                      ID: {emp.id} · {emp.departamento}
                     </p>
-                    <p>{usuario.email}</p>
                   </div>
 
                   <span
                     className={
-                      usuario.datos_faciales
+                      emp.descriptores_faciales
                         ? "face-badge registered"
                         : "face-badge pending"
                     }
                   >
-                    {usuario.datos_faciales ? "Registrado" : "Pendiente"}
+                    {emp.descriptores_faciales ? "Registrado" : "Pendiente"}
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* ── Columna derecha: cámara y captura ── */}
           <div className="biometric-card">
             <div className="card-header no-border">
               <div>
                 <h2>Datos biométricos</h2>
-                <p>Captura o carga la imagen facial del empleado seleccionado.</p>
+                <p>{statusTexto}</p>
               </div>
             </div>
 
-            <div className="biometric-dropzone">
-              <div className="camera-circle">📷</div>
-              <p>
-                Posicione al empleado frente a la cámara y capture la fotografía
-                facial para el registro biométrico.
-              </p>
+            <div className="biometric-dropzone" style={{ padding: 0, overflow: "hidden", borderRadius: "10px" }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
+              />
             </div>
 
-            <button className="capture-btn">Tomar foto con webcam</button>
-            <button className="upload-btn">Subir archivo de imagen</button>
-
+            <button
+              className="capture-btn"
+              onClick={capturarRostro}
+              disabled={cargando || !modelosListos || !seleccionado}
+              style={{ marginTop: "1rem", opacity: (!seleccionado || !modelosListos) ? 0.5 : 1 }}
+            >
+              {cargando ? "Procesando..." : "📷 Capturar rostro"}
+            </button>
           </div>
         </section>
       </main>

@@ -44,6 +44,25 @@ app.post('/api/empleados', async (req, res) => {
     }
 });
 
+// Actualizar descriptor facial de un empleado existente
+app.put('/api/empleados/:id', async (req, res) => {
+    const { id } = req.params;
+    const { descriptores_faciales } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE empleados SET descriptores_faciales = $1 WHERE id = $2 RETURNING *',
+            [descriptores_faciales, id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Empleado no encontrado' });
+        }
+        res.json({ status: 'success', data: result.rows[0] });
+    } catch (err) {
+        console.error("Error al actualizar descriptor:", err);
+        res.status(500).json({ error: 'Error al actualizar el descriptor facial' });
+    }
+});
+
 // Registrar asistencia
 app.post('/api/asistencia', async (req, res) => {
     const { empleadoId } = req.body;
