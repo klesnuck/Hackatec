@@ -363,6 +363,146 @@ body {
   color: var(--text-secondary);
 }
 
+/* ─── Modal Registro Manual ──────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+  background: #1a1a2e;
+  border: 1px solid rgba(0, 255, 157, 0.25);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  width: 360px;
+  box-shadow: 0 0 40px rgba(0, 255, 157, 0.1), 0 20px 60px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-header h2 {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.modal-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.modal-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modal-input {
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(0, 255, 157, 0.3);
+  border-radius: 12px;
+  padding: 0.9rem 1.2rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 12px rgba(0, 255, 157, 0.2);
+}
+
+.modal-input::-webkit-outer-spin-button,
+.modal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.modal-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--danger-color);
+  text-align: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.modal-btn-cancel {
+  flex: 1;
+  padding: 0.8rem;
+  background: transparent;
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn-cancel:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.modal-btn-confirm {
+  flex: 2;
+  padding: 0.8rem;
+  background: var(--accent-color);
+  border: none;
+  border-radius: 12px;
+  color: #0a0a0a;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.modal-btn-confirm:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(0, 255, 157, 0.4);
+  transform: translateY(-1px);
+}
+
+.modal-btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Footer Navigation */
 .kiosko-footer {
   padding: 2rem;
