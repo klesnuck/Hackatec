@@ -43,9 +43,12 @@ function Dashboard({ onLogout, view = "dashboard" }) {
         if (fechaInicio) params.set("fechaInicio", fechaInicio);
         if (fechaFin) params.set("fechaFin", fechaFin);
 
-        const response = await fetch(`${API_URL}/reportes/dashboard?${params}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `${API_URL}/reportes/dashboard?${params}`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         const data = await response.json();
 
@@ -141,53 +144,59 @@ function Dashboard({ onLogout, view = "dashboard" }) {
 
   const mapearResumenEmpleados = (empleados) =>
     empleados.map((empleado) => {
-        const resumen = calcularResumenEmpleado(empleado);
+      const resumen = calcularResumenEmpleado(empleado);
 
-        return {
-          ...empleado,
-          departamento: empleado.departamento || "Sin departamento",
-          rowKey: `${empleado.id_usuario}-${empleado.fecha || "sin-fecha"}`,
-          iniciales: `${empleado.nombre?.[0] || ""}${empleado.apellido_paterno?.[0] || ""}`,
-          fechaVista: empleado.fecha || "Sin fecha",
-          entradaVista: formatearHora(empleado.entrada),
-          salidaVista: formatearHora(empleado.salida),
-          ultimaHoraVista: formatearHora(empleado.ultima_hora),
-          ...resumen,
-        };
-      });
+      return {
+        ...empleado,
+        departamento: empleado.departamento || "Sin departamento",
+        rowKey: `${empleado.id_usuario}-${empleado.fecha || "sin-fecha"}`,
+        iniciales: `${empleado.nombre?.[0] || ""}${empleado.apellido_paterno?.[0] || ""}`,
+        fechaVista: empleado.fecha || "Sin fecha",
+        entradaVista: formatearHora(empleado.entrada),
+        salidaVista: formatearHora(empleado.salida),
+        ultimaHoraVista: formatearHora(empleado.ultima_hora),
+        ...resumen,
+      };
+    });
 
   const resumenEmpleados = useMemo(
     () => mapearResumenEmpleados(dashboardData.empleados),
-    [dashboardData.empleados]
+    [dashboardData.empleados],
   );
 
   const resumenActual = useMemo(
     () => mapearResumenEmpleados(dashboardData.empleadosActual),
-    [dashboardData.empleadosActual]
+    [dashboardData.empleadosActual],
   );
 
   const faltasHoy = resumenActual.filter((empleado) => !empleado.tiene_entrada);
   const retardosActual = resumenActual.filter(
-    (empleado) => empleado.entradaVista !== "Pendiente" && empleado.entradaVista > HORA_LIMITE_ENTRADA
+    (empleado) =>
+      empleado.entradaVista !== "Pendiente" &&
+      empleado.entradaVista > HORA_LIMITE_ENTRADA,
   );
 
-  const asistenciaPorDepartamento = dashboardData.departamentos.map((departamento) => {
-    const empleadosDepa = resumenActual.filter(
-      (empleado) => empleado.id_departamento === departamento.id_departamento
-    );
-    const presentes = empleadosDepa.filter((empleado) => empleado.tiene_entrada).length;
+  const asistenciaPorDepartamento = dashboardData.departamentos.map(
+    (departamento) => {
+      const empleadosDepa = resumenActual.filter(
+        (empleado) => empleado.id_departamento === departamento.id_departamento,
+      );
+      const presentes = empleadosDepa.filter(
+        (empleado) => empleado.tiene_entrada,
+      ).length;
 
-    return {
-      nombre: departamento.nombre_departamento,
-      abreviado: `${departamento.nombre_departamento.slice(0, 4)}.`,
-      presentes,
-      totalEmpleados: empleadosDepa.length,
-    };
-  });
+      return {
+        nombre: departamento.nombre_departamento,
+        abreviado: `${departamento.nombre_departamento.slice(0, 4)}.`,
+        presentes,
+        totalEmpleados: empleadosDepa.length,
+      };
+    },
+  );
 
   const maxGrafica = Math.max(
     ...asistenciaPorDepartamento.map((item) => item.totalEmpleados),
-    1
+    1,
   );
 
   const resumenFiltrado = resumenEmpleados.filter((empleado) => {
@@ -195,9 +204,10 @@ function Dashboard({ onLogout, view = "dashboard" }) {
       departmentFilter === "todos" ||
       empleado.id_departamento === Number(departmentFilter);
 
-    const fullName = `${empleado.nombre || ""} ${empleado.apellido_paterno || ""} ${
-      empleado.apellido_materno || ""
-    }`.toLowerCase();
+    const fullName =
+      `${empleado.nombre || ""} ${empleado.apellido_paterno || ""} ${
+        empleado.apellido_materno || ""
+      }`.toLowerCase();
 
     const matchesSearch = fullName.includes(searchTerm.trim().toLowerCase());
 
@@ -207,21 +217,24 @@ function Dashboard({ onLogout, view = "dashboard" }) {
   const totalPages = Math.max(Math.ceil(resumenFiltrado.length / PAGE_SIZE), 1);
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageStart = (safeCurrentPage - 1) * PAGE_SIZE;
-  const resumenPaginado = resumenFiltrado.slice(pageStart, pageStart + PAGE_SIZE);
+  const resumenPaginado = resumenFiltrado.slice(
+    pageStart,
+    pageStart + PAGE_SIZE,
+  );
 
   function toggleDetalles(rowKey) {
     setSelectedRowKey(selectedRowKey === rowKey ? null : rowKey);
   }
 
   const selectedEmployee = resumenEmpleados.find(
-    (empleado) => empleado.rowKey === selectedRowKey
+    (empleado) => empleado.rowKey === selectedRowKey,
   );
 
   const obtenerRegistrosIndividuales = () => {
     if (!selectedEmployee) return [];
 
     return resumenEmpleados.filter(
-      (empleado) => empleado.id_usuario === selectedEmployee.id_usuario
+      (empleado) => empleado.id_usuario === selectedEmployee.id_usuario,
     );
   };
 
@@ -257,7 +270,9 @@ function Dashboard({ onLogout, view = "dashboard" }) {
     ]);
 
     return [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","),
+      )
       .join("\n");
   }
 
@@ -274,7 +289,10 @@ function Dashboard({ onLogout, view = "dashboard" }) {
   }
 
   function exportarExcelGeneral() {
-    descargarCsv(resumenFiltrado, `reporte-general-roceel-${fechaInicio}-${fechaFin}.csv`);
+    descargarCsv(
+      resumenFiltrado,
+      `reporte-general-roceel-${fechaInicio}-${fechaFin}.csv`,
+    );
   }
 
   function exportarExcelIndividual() {
@@ -287,7 +305,7 @@ function Dashboard({ onLogout, view = "dashboard" }) {
 
     descargarCsv(
       registrosEmpleado,
-      `reporte-${selectedEmployee.id_usuario}-${fechaInicio}-${fechaFin}.csv`
+      `reporte-${selectedEmployee.id_usuario}-${fechaInicio}-${fechaFin}.csv`,
     );
   }
 
@@ -308,7 +326,7 @@ function Dashboard({ onLogout, view = "dashboard" }) {
             <td>${empleado.horasExtra}</td>
             <td>${empleado.horasPerdidas}</td>
           </tr>
-        `
+        `,
       )
       .join("");
 
@@ -372,7 +390,8 @@ function Dashboard({ onLogout, view = "dashboard" }) {
   }
 
   function obtenerMinutosEntrada(empleado) {
-    if (!empleado.entradaVista || empleado.entradaVista === "Pendiente") return null;
+    if (!empleado.entradaVista || empleado.entradaVista === "Pendiente")
+      return null;
     return obtenerMinutos(empleado.entradaVista);
   }
 
@@ -400,7 +419,7 @@ function Dashboard({ onLogout, view = "dashboard" }) {
         tolerancia: [],
         retardos: [],
         sinEntrada: [],
-      }
+      },
     );
   }
 
@@ -430,7 +449,7 @@ function Dashboard({ onLogout, view = "dashboard" }) {
                 : ""
             }
           </tr>
-        `
+        `,
       )
       .join("");
   }
@@ -439,19 +458,26 @@ function Dashboard({ onLogout, view = "dashboard" }) {
     const buckets = new Map();
 
     empleados.forEach((empleado) => {
-      if (!empleado.entradaVista || empleado.entradaVista === "Pendiente") return;
-      buckets.set(empleado.entradaVista, (buckets.get(empleado.entradaVista) || 0) + 1);
+      if (!empleado.entradaVista || empleado.entradaVista === "Pendiente")
+        return;
+      buckets.set(
+        empleado.entradaVista,
+        (buckets.get(empleado.entradaVista) || 0) + 1,
+      );
     });
 
-    const horasOrdenadas = Array.from(buckets.entries()).sort(([horaA], [horaB]) =>
-      horaA.localeCompare(horaB)
+    const horasOrdenadas = Array.from(buckets.entries()).sort(
+      ([horaA], [horaB]) => horaA.localeCompare(horaB),
     );
 
     if (horasOrdenadas.length === 0) {
       return `<div class="timeline-empty">No hay entradas registradas para el filtro actual.</div>`;
     }
 
-    const maximo = Math.max(...horasOrdenadas.map(([, cantidad]) => cantidad), 1);
+    const maximo = Math.max(
+      ...horasOrdenadas.map(([, cantidad]) => cantidad),
+      1,
+    );
 
     return horasOrdenadas
       .map(([hora, cantidad]) => {
@@ -490,7 +516,10 @@ function Dashboard({ onLogout, view = "dashboard" }) {
       return total + Math.max(diferencia, 0);
     }, 0);
 
-    const minutosPerdidos = Math.max(minutosEsperados - minutosTrabajados + minutosExtra, 0);
+    const minutosPerdidos = Math.max(
+      minutosEsperados - minutosTrabajados + minutosExtra,
+      0,
+    );
 
     return {
       diasEvaluados,
@@ -510,20 +539,23 @@ function Dashboard({ onLogout, view = "dashboard" }) {
     const retardosPct = porcentaje(grupos.retardos.length, total);
     const sinEntradaPct = porcentaje(grupos.sinEntrada.length, total);
     const destacadoDeg = (grupos.destacados.length / Math.max(total, 1)) * 360;
-    const toleranciaDeg = destacadoDeg + (grupos.tolerancia.length / Math.max(total, 1)) * 360;
-    const retardosDeg = toleranciaDeg + (grupos.retardos.length / Math.max(total, 1)) * 360;
+    const toleranciaDeg =
+      destacadoDeg + (grupos.tolerancia.length / Math.max(total, 1)) * 360;
+    const retardosDeg =
+      toleranciaDeg + (grupos.retardos.length / Math.max(total, 1)) * 360;
     const departamentoTexto =
       departmentFilter === "todos"
         ? "Todos los departamentos"
         : dashboardData.departamentos.find(
-            (departamento) => departamento.id_departamento === Number(departmentFilter)
+            (departamento) =>
+              departamento.id_departamento === Number(departmentFilter),
           )?.nombre_departamento || "Departamento filtrado";
     const tituloReporte = opciones.titulo || "ESTUDIO DE PUNTUALIDAD";
     const contextoReporte = opciones.contexto || departamentoTexto;
     const resumenTitulo = opciones.resumenTitulo || "Resumen general";
-    const notaFiltro =
+    /*const notaFiltro =
       opciones.notaFiltro ||
-      "El reporte respeta los filtros de fecha, departamento y busqueda aplicados.";
+      "El reporte respeta los filtros de fecha, departamento y busqueda aplicados.";*/
     const detallePersona = opciones.detallePersona;
     const mostrarMetricasHoras = Boolean(opciones.mostrarMetricasHoras);
 
@@ -1090,20 +1122,6 @@ function Dashboard({ onLogout, view = "dashboard" }) {
                   </tbody>
                 </table>
               </div>
-              <div class="white-box">
-                <h2>Observaciones</h2>
-                <ul class="observations">
-                  <li>Horario establecido de entrada: 08:00 AM.</li>
-                  <li>La tolerancia termina a las 08:10 AM.</li>
-                  <li>Puntual destacado considera entradas antes de 07:30 AM.</li>
-                  <li>Retardo real considera entradas despues de 08:10 AM.</li>
-                  <li>${escaparHtml(notaFiltro)}</li>
-                </ul>
-              </div>
-              <div class="white-box commitment">
-                <strong>Comprometidos con la puntualidad,<br><span>comprometidos con la excelencia.</span></strong>
-                <p>Disciplina | Responsabilidad | Productividad | Resultados</p>
-              </div>
             </section>
           </main>
         </body>
@@ -1126,25 +1144,23 @@ function Dashboard({ onLogout, view = "dashboard" }) {
 
     const registrosEmpleado = obtenerRegistrosIndividuales();
 
-    imprimirReporteGeneral(
-      registrosEmpleado,
-      {
-        titulo: "REPORTE INDIVIDUAL DE PUNTUALIDAD",
-        contexto: `${selectedEmployee.nombre} ${selectedEmployee.apellido_paterno} | ${selectedEmployee.departamento}`,
-        resumenTitulo: "Resumen individual",
-        notaFiltro: "El reporte individual considera todos los dias del empleado dentro del periodo seleccionado.",
-        mostrarMetricasHoras: true,
-        detallePersona: {
-          id: selectedEmployee.id_usuario,
-          nombre: `${selectedEmployee.nombre} ${selectedEmployee.apellido_paterno} ${
-            selectedEmployee.apellido_materno || ""
-          }`,
-          email: selectedEmployee.email,
-          departamento: selectedEmployee.departamento,
-          rol: selectedEmployee.rol || "Sin rol",
-        },
-      }
-    );
+    imprimirReporteGeneral(registrosEmpleado, {
+      titulo: "REPORTE INDIVIDUAL DE PUNTUALIDAD",
+      contexto: `${selectedEmployee.nombre} ${selectedEmployee.apellido_paterno} | ${selectedEmployee.departamento}`,
+      resumenTitulo: "Resumen individual",
+      notaFiltro:
+        "El reporte individual considera todos los dias del empleado dentro del periodo seleccionado.",
+      mostrarMetricasHoras: true,
+      detallePersona: {
+        id: selectedEmployee.id_usuario,
+        nombre: `${selectedEmployee.nombre} ${selectedEmployee.apellido_paterno} ${
+          selectedEmployee.apellido_materno || ""
+        }`,
+        email: selectedEmployee.email,
+        departamento: selectedEmployee.departamento,
+        rol: selectedEmployee.rol || "Sin rol",
+      },
+    });
   }
 
   return (
@@ -1197,434 +1213,465 @@ function Dashboard({ onLogout, view = "dashboard" }) {
           </p>
         </header>
 
-        {error && <div className="admin-login-error dashboard-error">{error}</div>}
+        {error && (
+          <div className="admin-login-error dashboard-error">{error}</div>
+        )}
 
-        {!isGestion && <section className="stats-grid three-cards">
-          <div className="stat-card">
-            <div>
-              <p>Empleados en planta</p>
-              <h2>{loading ? "--" : dashboardData.metricas.empleadosEnPlanta}</h2>
-              <span>Con registro el dia seleccionado</span>
+        {!isGestion && (
+          <section className="stats-grid three-cards">
+            <div className="stat-card">
+              <div>
+                <p>Empleados en planta</p>
+                <h2>
+                  {loading ? "--" : dashboardData.metricas.empleadosEnPlanta}
+                </h2>
+                <span>Con registro el dia seleccionado</span>
+              </div>
+              <div className="stat-icon blue">IN</div>
             </div>
-            <div className="stat-icon blue">IN</div>
-          </div>
 
-          <div className="stat-card">
-            <div>
-              <p>Retardos hoy</p>
-              <h2 className="orange-text">
-                {loading ? "--" : dashboardData.metricas.retardosHoy}
-              </h2>
-              <span>Entrada despues de 08:10</span>
+            <div className="stat-card">
+              <div>
+                <p>Retardos hoy</p>
+                <h2 className="orange-text">
+                  {loading ? "--" : dashboardData.metricas.retardosHoy}
+                </h2>
+                <span>Entrada despues de 08:10</span>
+              </div>
+              <div className="stat-icon orange">!</div>
             </div>
-            <div className="stat-icon orange">!</div>
-          </div>
 
-          <div className="stat-card">
-            <div>
-              <p>Faltas hoy</p>
-              <h2 className="green-text">{loading ? "--" : dashboardData.metricas.faltasHoy}</h2>
-              <span>No han checado entrada</span>
+            <div className="stat-card">
+              <div>
+                <p>Faltas hoy</p>
+                <h2 className="green-text">
+                  {loading ? "--" : dashboardData.metricas.faltasHoy}
+                </h2>
+                <span>No han checado entrada</span>
+              </div>
+              <div className="stat-icon green">--</div>
             </div>
-            <div className="stat-icon green">--</div>
-          </div>
-        </section>}
+          </section>
+        )}
 
-        {isGestion && <section className="filters-card">
-          <div className="filter-group">
-            <label>Departamento</label>
-            <select
-              value={departmentFilter}
-              onChange={(event) => {
-                setDepartmentFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="todos">Todos los departamentos</option>
-              {dashboardData.departamentos.map((departamento) => (
-                <option
-                  key={departamento.id_departamento}
-                  value={departamento.id_departamento}
-                >
-                  {departamento.nombre_departamento}
-                </option>
-              ))}
-            </select>
-          </div>
+        {isGestion && (
+          <section className="filters-card">
+            <div className="filter-group">
+              <label>Departamento</label>
+              <select
+                value={departmentFilter}
+                onChange={(event) => {
+                  setDepartmentFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="todos">Todos los departamentos</option>
+                {dashboardData.departamentos.map((departamento) => (
+                  <option
+                    key={departamento.id_departamento}
+                    value={departamento.id_departamento}
+                  >
+                    {departamento.nombre_departamento}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="filter-group">
-            <label>Fecha inicio</label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(event) => {
-                setFechaInicio(event.target.value);
-                if (event.target.value > fechaFin) {
-                  setFechaFin(event.target.value);
-                }
-              }}
-            />
-          </div>
+            <div className="filter-group">
+              <label>Fecha inicio</label>
+              <input
+                type="date"
+                value={fechaInicio}
+                onChange={(event) => {
+                  setFechaInicio(event.target.value);
+                  if (event.target.value > fechaFin) {
+                    setFechaFin(event.target.value);
+                  }
+                }}
+              />
+            </div>
 
-          <div className="filter-group">
-            <label>Fecha fin</label>
-            <input
-              type="date"
-              value={fechaFin}
-              min={fechaInicio}
-              onChange={(event) => setFechaFin(event.target.value)}
-            />
-          </div>
+            <div className="filter-group">
+              <label>Fecha fin</label>
+              <input
+                type="date"
+                value={fechaFin}
+                min={fechaInicio}
+                onChange={(event) => setFechaFin(event.target.value)}
+              />
+            </div>
 
-          <div className="export-actions">
-            <button type="button" onClick={exportarExcelGeneral}>
-              Excel
-            </button>
-            <button type="button" onClick={exportarPDFGeneral}>
-              PDF
-            </button>
-          </div>
-        </section>}
+            <div className="export-actions">
+              <button type="button" onClick={exportarExcelGeneral}>
+                Excel
+              </button>
+              <button type="button" onClick={exportarPDFGeneral}>
+                PDF
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="dashboard-stack">
-          {isGestion && <div className="table-card">
-            <div className="card-header">
-              <div>
-                <h2>Resumen en tiempo real</h2>
-                <p>
-                  {loading
-                    ? "Cargando empleados..."
-                    : `${resumenFiltrado.length} dias de asistencia encontrados. Pagina ${safeCurrentPage} de ${totalPages}.`}
-                </p>
+          {isGestion && (
+            <div className="table-card">
+              <div className="card-header">
+                <div>
+                  <h2>Resumen en tiempo real</h2>
+                  <p>
+                    {loading
+                      ? "Cargando empleados..."
+                      : `${resumenFiltrado.length} dias de asistencia encontrados. Pagina ${safeCurrentPage} de ${totalPages}.`}
+                  </p>
+                </div>
+
+                <span className="live-badge">
+                  <span></span>
+                  En vivo
+                </span>
               </div>
 
-              <span className="live-badge">
-                <span></span>
-                En vivo
-              </span>
-            </div>
-
-            <div className="table-toolbar">
-              <div className="filter-group search-group">
-                <label>Buscar empleado</label>
-                <input
-                  type="search"
-                  placeholder="Nombre o apellido"
-                  value={searchTerm}
-                  onChange={(event) => {
-                    setSearchTerm(event.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
+              <div className="table-toolbar">
+                <div className="filter-group search-group">
+                  <label>Buscar empleado</label>
+                  <input
+                    type="search"
+                    placeholder="Nombre o apellido"
+                    value={searchTerm}
+                    onChange={(event) => {
+                      setSearchTerm(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="table-wrapper clean-table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID Usuario</th>
-                    <th>Fecha</th>
-                    <th>Empleado</th>
-                    <th>Departamento</th>
-                    <th>Rostro</th>
-                    <th>Detalles</th>
-                  </tr>
-                </thead>
+              <div className="table-wrapper clean-table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID Usuario</th>
+                      <th>Fecha</th>
+                      <th>Empleado</th>
+                      <th>Departamento</th>
+                      <th>Rostro</th>
+                      <th>Detalles</th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {resumenPaginado.map((empleado) => (
-                    <Fragment key={empleado.rowKey}>
-                      <tr>
-                        <td>{empleado.id_usuario}</td>
-                        <td>{empleado.fechaVista}</td>
-                        <td>
-                          <div className="employee-cell">
-                            <div className="avatar">{empleado.iniciales || "?"}</div>
-                            <div>
-                              <strong>
-                                {empleado.nombre} {empleado.apellido_paterno}
-                              </strong>
-                              <p>{empleado.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td>{empleado.departamento}</td>
-                        <td>
-                          <span
-                            className={
-                              empleado.datos_faciales
-                                ? "face-badge registered"
-                                : "face-badge pending"
-                            }
-                          >
-                            {empleado.datos_faciales ? "Registrado" : "Pendiente"}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            className="details-btn"
-                            onClick={() => toggleDetalles(empleado.rowKey)}
-                          >
-                            {selectedRowKey === empleado.rowKey
-                              ? "Ocultar"
-                              : "Ver detalles"}
-                          </button>
-                        </td>
-                      </tr>
-
-                      {selectedRowKey === empleado.rowKey && (
-                        <tr className="details-row">
-                          <td colSpan="6">
-                            <div className="details-panel">
-                              <div>
-                                <span>Fecha</span>
-                                <strong>{empleado.fechaVista}</strong>
+                  <tbody>
+                    {resumenPaginado.map((empleado) => (
+                      <Fragment key={empleado.rowKey}>
+                        <tr>
+                          <td>{empleado.id_usuario}</td>
+                          <td>{empleado.fechaVista}</td>
+                          <td>
+                            <div className="employee-cell">
+                              <div className="avatar">
+                                {empleado.iniciales || "?"}
                               </div>
                               <div>
-                                <span>Ultimo movimiento</span>
-                                <strong>{formatearTipo(empleado.ultimo_tipo)}</strong>
-                              </div>
-                              <div>
-                                <span>Ultima hora</span>
-                                <strong>{empleado.ultimaHoraVista}</strong>
-                              </div>
-                              <div>
-                                <span>Entrada</span>
-                                <strong>{empleado.entradaVista}</strong>
-                              </div>
-                              <div>
-                                <span>Salida</span>
-                                <strong>{empleado.salidaVista}</strong>
-                              </div>
-                              <div>
-                                <span>Horas trabajadas</span>
-                                <strong>{empleado.horasTrabajadas}</strong>
-                              </div>
-                              <div>
-                                <span>Horas extra</span>
-                                <strong>{empleado.horasExtra}</strong>
-                              </div>
-                              <div>
-                                <span>Horas perdidas</span>
-                                <strong>{empleado.horasPerdidas}</strong>
-                              </div>
-                              <div className="detail-export-cell">
-                                <span>Exportar individual</span>
-                                <div className="detail-export-actions">
-                                  <button
-                                    type="button"
-                                    onClick={exportarPDFIndividual}
-                                    aria-label="Exportar PDF individual"
-                                  >
-                                    PDF
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={exportarExcelIndividual}
-                                    aria-label="Exportar Excel individual"
-                                  >
-                                    Excel
-                                  </button>
-                                </div>
+                                <strong>
+                                  {empleado.nombre} {empleado.apellido_paterno}
+                                </strong>
+                                <p>{empleado.email}</p>
                               </div>
                             </div>
                           </td>
+                          <td>{empleado.departamento}</td>
+                          <td>
+                            <span
+                              className={
+                                empleado.datos_faciales
+                                  ? "face-badge registered"
+                                  : "face-badge pending"
+                              }
+                            >
+                              {empleado.datos_faciales
+                                ? "Registrado"
+                                : "Pendiente"}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              className="details-btn"
+                              onClick={() => toggleDetalles(empleado.rowKey)}
+                            >
+                              {selectedRowKey === empleado.rowKey
+                                ? "Ocultar"
+                                : "Ver detalles"}
+                            </button>
+                          </td>
+                        </tr>
+
+                        {selectedRowKey === empleado.rowKey && (
+                          <tr className="details-row">
+                            <td colSpan="6">
+                              <div className="details-panel">
+                                <div>
+                                  <span>Fecha</span>
+                                  <strong>{empleado.fechaVista}</strong>
+                                </div>
+                                <div>
+                                  <span>Ultimo movimiento</span>
+                                  <strong>
+                                    {formatearTipo(empleado.ultimo_tipo)}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span>Ultima hora</span>
+                                  <strong>{empleado.ultimaHoraVista}</strong>
+                                </div>
+                                <div>
+                                  <span>Entrada</span>
+                                  <strong>{empleado.entradaVista}</strong>
+                                </div>
+                                <div>
+                                  <span>Salida</span>
+                                  <strong>{empleado.salidaVista}</strong>
+                                </div>
+                                <div>
+                                  <span>Horas trabajadas</span>
+                                  <strong>{empleado.horasTrabajadas}</strong>
+                                </div>
+                                <div>
+                                  <span>Horas extra</span>
+                                  <strong>{empleado.horasExtra}</strong>
+                                </div>
+                                <div>
+                                  <span>Horas perdidas</span>
+                                  <strong>{empleado.horasPerdidas}</strong>
+                                </div>
+                                <div className="detail-export-cell">
+                                  <span>Exportar individual</span>
+                                  <div className="detail-export-actions">
+                                    <button
+                                      type="button"
+                                      onClick={exportarPDFIndividual}
+                                      aria-label="Exportar PDF individual"
+                                    >
+                                      PDF
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={exportarExcelIndividual}
+                                      aria-label="Exportar Excel individual"
+                                    >
+                                      Excel
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+
+                    {!loading && resumenPaginado.length === 0 && (
+                      <tr>
+                        <td colSpan="6">No hay empleados para este filtro.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="pagination-bar">
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(page - 1, 1))
+                  }
+                >
+                  Anterior
+                </button>
+
+                <span>
+                  {resumenFiltrado.length === 0 ? 0 : pageStart + 1}-
+                  {Math.min(pageStart + PAGE_SIZE, resumenFiltrado.length)} de{" "}
+                  {resumenFiltrado.length}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={safeCurrentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(page + 1, totalPages))
+                  }
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isGestion && (
+            <div className="chart-card full-chart-card">
+              <div className="card-header">
+                <div>
+                  <h2>Asistencia por departamento</h2>
+                  <p>Asistieron contra total del departamento</p>
+                </div>
+
+                <div className="chart-tabs">
+                  <button
+                    type="button"
+                    className={chartTab === "grafica" ? "active" : ""}
+                    onClick={() => setChartTab("grafica")}
+                  >
+                    Grafica
+                  </button>
+                  <button
+                    type="button"
+                    className={chartTab === "faltas" ? "active" : ""}
+                    onClick={() => setChartTab("faltas")}
+                  >
+                    Sin entrada
+                  </button>
+                  <button
+                    type="button"
+                    className={chartTab === "retardos" ? "active" : ""}
+                    onClick={() => setChartTab("retardos")}
+                  >
+                    Retardos
+                  </button>
+                </div>
+              </div>
+
+              {chartTab === "grafica" ? (
+                <>
+                  <div className="attendance-chart">
+                    <div className="chart-y-axis">
+                      <span>{maxGrafica}</span>
+                      <span>{Math.ceil(maxGrafica * 0.75)}</span>
+                      <span>{Math.ceil(maxGrafica * 0.5)}</span>
+                      <span>{Math.ceil(maxGrafica * 0.25)}</span>
+                      <span>0</span>
+                    </div>
+
+                    <div className="chart-plot">
+                      <div className="grid-line line-24"></div>
+                      <div className="grid-line line-18"></div>
+                      <div className="grid-line line-12"></div>
+                      <div className="grid-line line-6"></div>
+                      <div className="grid-line line-0"></div>
+
+                      {asistenciaPorDepartamento.map((item) => {
+                        const height = Math.max(
+                          (item.presentes / maxGrafica) * 100,
+                          item.presentes > 0 ? 8 : 2,
+                        );
+
+                        return (
+                          <div
+                            className="attendance-bar-item"
+                            key={item.nombre}
+                          >
+                            <div className="bar-count">
+                              {item.presentes}-{item.totalEmpleados}
+                            </div>
+                            <div
+                              className="attendance-bar"
+                              style={{ height: `${height}%` }}
+                            ></div>
+                            <p>{item.abreviado}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="attendance-legend">
+                    <span>
+                      <b className="legend-green"></b> Asistieron
+                    </span>
+                    <span>
+                      <b className="legend-red"></b> Sin entrada
+                    </span>
+                    <span>
+                      <b className="legend-yellow"></b> Retardos
+                    </span>
+                  </div>
+                </>
+              ) : chartTab === "faltas" ? (
+                <div className="absences-table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID Usuario</th>
+                        <th>Empleado</th>
+                        <th>Departamento</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {faltasHoy.map((empleado) => (
+                        <tr key={empleado.id_usuario}>
+                          <td>{empleado.id_usuario}</td>
+                          <td>
+                            {empleado.nombre} {empleado.apellido_paterno}
+                          </td>
+                          <td>{empleado.departamento}</td>
+                          <td>
+                            <span className="face-badge pending">
+                              Sin entrada
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {!loading && faltasHoy.length === 0 && (
+                        <tr>
+                          <td colSpan="4">
+                            Todos los empleados checaron entrada.
+                          </td>
                         </tr>
                       )}
-                    </Fragment>
-                  ))}
-
-                  {!loading && resumenPaginado.length === 0 && (
-                    <tr>
-                      <td colSpan="6">No hay empleados para este filtro.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="pagination-bar">
-              <button
-                type="button"
-                disabled={safeCurrentPage === 1}
-                onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-              >
-                Anterior
-              </button>
-
-              <span>
-                {resumenFiltrado.length === 0 ? 0 : pageStart + 1}-
-                {Math.min(pageStart + PAGE_SIZE, resumenFiltrado.length)} de{" "}
-                {resumenFiltrado.length}
-              </span>
-
-              <button
-                type="button"
-                disabled={safeCurrentPage === totalPages}
-                onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
-              >
-                Siguiente
-              </button>
-            </div>
-          </div>}
-
-          {!isGestion && <div className="chart-card full-chart-card">
-            <div className="card-header">
-              <div>
-                <h2>Asistencia por departamento</h2>
-                <p>Asistieron contra total del departamento</p>
-              </div>
-
-              <div className="chart-tabs">
-                <button
-                  type="button"
-                  className={chartTab === "grafica" ? "active" : ""}
-                  onClick={() => setChartTab("grafica")}
-                >
-                  Grafica
-                </button>
-                <button
-                  type="button"
-                  className={chartTab === "faltas" ? "active" : ""}
-                  onClick={() => setChartTab("faltas")}
-                >
-                  Sin entrada
-                </button>
-                <button
-                  type="button"
-                  className={chartTab === "retardos" ? "active" : ""}
-                  onClick={() => setChartTab("retardos")}
-                >
-                  Retardos
-                </button>
-              </div>
-            </div>
-
-            {chartTab === "grafica" ? (
-              <>
-                <div className="attendance-chart">
-                  <div className="chart-y-axis">
-                    <span>{maxGrafica}</span>
-                    <span>{Math.ceil(maxGrafica * 0.75)}</span>
-                    <span>{Math.ceil(maxGrafica * 0.5)}</span>
-                    <span>{Math.ceil(maxGrafica * 0.25)}</span>
-                    <span>0</span>
-                  </div>
-
-                  <div className="chart-plot">
-                    <div className="grid-line line-24"></div>
-                    <div className="grid-line line-18"></div>
-                    <div className="grid-line line-12"></div>
-                    <div className="grid-line line-6"></div>
-                    <div className="grid-line line-0"></div>
-
-                    {asistenciaPorDepartamento.map((item) => {
-                      const height = Math.max(
-                        (item.presentes / maxGrafica) * 100,
-                        item.presentes > 0 ? 8 : 2
-                      );
-
-                      return (
-                        <div className="attendance-bar-item" key={item.nombre}>
-                          <div className="bar-count">
-                            {item.presentes}-{item.totalEmpleados}
-                          </div>
-                          <div
-                            className="attendance-bar"
-                            style={{ height: `${height}%` }}
-                          ></div>
-                          <p>{item.abreviado}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
+              ) : (
+                <div className="absences-table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID Usuario</th>
+                        <th>Empleado</th>
+                        <th>Departamento</th>
+                        <th>Entrada</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
 
-                <div className="attendance-legend">
-                  <span>
-                    <b className="legend-green"></b> Asistieron
-                  </span>
-                  <span>
-                    <b className="legend-red"></b> Sin entrada
-                  </span>
-                  <span>
-                    <b className="legend-yellow"></b> Retardos
-                  </span>
+                    <tbody>
+                      {retardosActual.map((empleado) => (
+                        <tr key={empleado.id_usuario}>
+                          <td>{empleado.id_usuario}</td>
+                          <td>
+                            {empleado.nombre} {empleado.apellido_paterno}
+                          </td>
+                          <td>{empleado.departamento}</td>
+                          <td>{empleado.entradaVista}</td>
+                          <td>
+                            <span className="face-badge pending">Retardo</span>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {!loading && retardosActual.length === 0 && (
+                        <tr>
+                          <td colSpan="5">No hay retardos registrados hoy.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </>
-            ) : chartTab === "faltas" ? (
-              <div className="absences-table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID Usuario</th>
-                      <th>Empleado</th>
-                      <th>Departamento</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {faltasHoy.map((empleado) => (
-                      <tr key={empleado.id_usuario}>
-                        <td>{empleado.id_usuario}</td>
-                        <td>
-                          {empleado.nombre} {empleado.apellido_paterno}
-                        </td>
-                        <td>{empleado.departamento}</td>
-                        <td>
-                          <span className="face-badge pending">Sin entrada</span>
-                        </td>
-                      </tr>
-                    ))}
-
-                    {!loading && faltasHoy.length === 0 && (
-                      <tr>
-                        <td colSpan="4">Todos los empleados checaron entrada.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="absences-table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>ID Usuario</th>
-                      <th>Empleado</th>
-                      <th>Departamento</th>
-                      <th>Entrada</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {retardosActual.map((empleado) => (
-                      <tr key={empleado.id_usuario}>
-                        <td>{empleado.id_usuario}</td>
-                        <td>
-                          {empleado.nombre} {empleado.apellido_paterno}
-                        </td>
-                        <td>{empleado.departamento}</td>
-                        <td>{empleado.entradaVista}</td>
-                        <td>
-                          <span className="face-badge pending">Retardo</span>
-                        </td>
-                      </tr>
-                    ))}
-
-                    {!loading && retardosActual.length === 0 && (
-                      <tr>
-                        <td colSpan="5">No hay retardos registrados hoy.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>}
+              )}
+            </div>
+          )}
         </section>
       </main>
     </div>

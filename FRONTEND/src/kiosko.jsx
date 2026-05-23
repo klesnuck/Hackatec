@@ -16,6 +16,7 @@ const Kiosko = () => {
   const [modelosListos, setModelosListos] = useState(false);
   const [empleadosRegistrados, setEmpleadosRegistrados] = useState([]);
   const [statusTexto, setStatusTexto] = useState('Cargando IA...');
+  const [camaraFallback, setCamaraFallback] = useState(false);
 
   // Modal de entrada manual
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -73,8 +74,15 @@ const Kiosko = () => {
   }, []);
 
   const encenderWebCam = () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCamaraFallback(true);
+      setStatusTexto('Camara no disponible');
+      return;
+    }
+
     navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
       .then(stream => {
+        setCamaraFallback(false);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           // Forzar reproducción por si autoPlay falla
@@ -83,6 +91,7 @@ const Kiosko = () => {
       })
       .catch(err => {
         console.error("Error al abrir la camara:", err);
+        setCamaraFallback(true);
         setStatusTexto('Camara no detectada');
       });
   };
