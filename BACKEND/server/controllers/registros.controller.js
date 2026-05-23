@@ -1,5 +1,7 @@
 import { pool } from "../db.js";
 
+const tiposRegistro = ["entrada", "salida_comida", "regreso_comida", "salida"];
+
 export const getRegistros = async (req, res) => {
   try {
     const {
@@ -74,5 +76,68 @@ export const getRegistros = async (req, res) => {
   } catch (error) {
     console.log("Error en getRegistros:", error);
     res.status(500).json({ message: "Error al obtener registros" });
+  }
+};
+
+export const createAsistencia = async (req, res) => {
+  try {
+    const idUsuario = req.body.id_usuario || req.body.empleadoId;
+
+    if (!idUsuario) {
+      return res.status(400).json({ message: "id_usuario es requerido" });
+    }
+
+    const [usuarios] = await pool.query(
+      `
+      SELECT id_usuario, nombre, apellido_paterno
+      FROM usuarios
+      WHERE id_usuario = ?
+      `,
+      [idUsuario]
+    );
+
+    if (usuarios.length <= 0) {
+      return res.status(404).json({ message: "Empleado no encontrado" });
+    }
+
+    const [registrosHoy] = await pool.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM registros
+      WHERE id_usuario = ?
+        AND fecha = CURDATE()
+      `,
+      [idUsuario]
+    );
+
+    const total = registrosHoy[0].total;
+
+    if (total >= tiposRegistro.length) {
+      return res.status(400).json({
+        message: "El empleado ya completó sus registros del día"
+      });
+    }
+
+    const tipo = tiposRegistro[total];
+
+    const [result] = await pool.query(
+      `
+      INSERT INTO registros (id_usuario, fecha, hora, tipo)
+      VALUES (?, CURDATE(), CURTIME(), ?)
+      `,
+      [idUsuario, tipo]
+    );
+
+    res.status(201).json({
+      status: "success",
+      message: "Asistencia registrada correctamente",
+      id_registro: result.insertId,
+      id_usuario: Number(idUsuario),
+      nombre: usuarios[0].nombre,
+      tipo
+    });
+  } catch (error) {
+    console.log("Error en createAsistencia:", error);
+    res.status(500).json({ message: "Error al registrar asistencia" });
   }
 };

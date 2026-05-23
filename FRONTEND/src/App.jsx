@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import Kiosko from "./Kiosko";
-import Registro from "./registro";
 import AdminLogin from "./AdminLogin";
 import Dashboard from "./Dashboard";
+import Kiosko from "./Kiosko";
+import Registro from "./registro";
 import RegistroFacial from "./RegistroFacial";
 
 function App() {

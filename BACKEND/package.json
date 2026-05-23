@@ -1,33 +1,17 @@
 {
-<<<<<<< HEAD
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-=======
   "name": "erick-cine-servidor",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server/index.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon server/index.js",
+    "start": "node server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
->>>>>>> 1bab3141dafdd044b3903084fe63b7b62f08e78a
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-<<<<<<< HEAD
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "pg": "^8.21.0"
-=======
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
@@ -36,6 +20,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
->>>>>>> 1bab3141dafdd044b3903084fe63b7b62f08e78a
   }
 }

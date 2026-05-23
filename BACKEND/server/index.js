@@ -1,7 +1,6 @@
 import express from 'express';
 import { PORT } from './config.js';
 import usuarioRoutes from './routes/usuarios.routes.js';
-import proyeccionesRoutes from './routes/proyeccion.routes.js'
 import registrosRoutes from './routes/registros.routes.js'
 import cors from 'cors'; // Importar CORS
 
@@ -12,7 +11,6 @@ app.use(express.json());
 
 app.use(cors());
 app.use(usuarioRoutes);
-app.use(proyeccionesRoutes)
 app.use(registrosRoutes)
 
 
